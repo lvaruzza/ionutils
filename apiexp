@@ -1,0 +1,11 @@
+#!/usr/bin/env python2.7
+
+import requests
+import json
+import sys
+
+path = sys.argv[1]
+resp1 = requests.get('http://ion/' + path + '?format=json', auth=('ionadmin', 'ionadmin'))
+
+print json.dumps(json.loads(resp1.content),indent=4)
+

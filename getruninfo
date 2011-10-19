@@ -1,0 +1,71 @@
+#!/usr/bin/env python2.7
+
+import sys
+from restful_lib import Connection
+import simplejson as json
+
+if (len(sys.argv) == 2):
+  [runName] = sys.argv[1:2]
+else:
+  print '\n\tUsage: getruninfo.py <runName>'
+  print '\n\tExample: getruninfo.py Auto_B15-45_4'
+  sys.exit (1)
+
+try:
+    base_url = "http://ion"
+    conn = Connection(base_url, username="ionadmin", password="ionadmin")
+
+    response = conn.request_get('/rundb/api/v1/results?format=json&resultsName=' + runName)
+except ValueError:
+    print "Error:  Failed to load run data"
+
+rdata = json.loads('[%s]' % response[u'body'])
+rdata= rdata[0]
+rdata = rdata[u'objects']
+runData = rdata[0]
+
+experLoc = runData[u'experiment']
+
+try:
+    response = conn.request_get(experLoc)
+    edata = json.loads('[%s]' % response[u'body'])
+except ValueError:
+    print "Error:  Failed to load experiment data"
+
+expData = edata[0]
+print "\nProject:\t\t" + expData[u'project']
+print "Experiment Name:\t" + expData[u'expName']
+print "PGM Name:\t\t" + expData[u'pgmName']
+print "Library:\t\t" + expData[u'library']
+print "Notes:\t\t\t" + expData[u'notes']
+
+print "Results:\t\t" + runData['resultsName']
+print "Timestamp:\t\t" + runData['timeStamp']
+
+ametrics = runData[u'analysismetrics']
+ametricsLoc = ametrics[0]
+
+try:
+    response = conn.request_get(ametricsLoc)
+    adata = json.loads('[%s]' % response[u'body'])
+except ValueError:
+    print "Error:  Failed to load analysis metrics data"
+
+print "\n\nAnalysis Metrics:\n=================\n"
+for propType, propVal in adata[0].iteritems():
+    if propType != "resource_uri":
+      print propType + "\t\t= " + str(propVal)
+
+qmetrics = runData[u'qualitymetrics']
+qmetricsLoc = qmetrics[0]
+
+try:
+    response = conn.request_get(qmetricsLoc)
+    qdata = json.loads('[%s]' % response[u'body'])
+except ValueError:
+    print "Error:  Failed to load quality metrics data"
+
+print "\n\nQuality Metrics:\n================\n"
+for propType, propVal in qdata[0].iteritems():
+    if propType != "resource_uri":
+      print propType + "\t\t= " + str(propVal)
